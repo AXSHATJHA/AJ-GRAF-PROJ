@@ -69,11 +69,23 @@ def normalize_text(text):
 
 # Below code block is for local use
 # -------------------------------------------------------------------------------------
-mlflow.set_tracking_uri('https://dagshub.com/AXSHATJHA/AJ-GRAF-PROJ.mlflow')
-dagshub.init(repo_owner='AXSHATJHA', repo_name='AJ-GRAF-PROJ', mlflow=True)
+# mlflow.set_tracking_uri('https://dagshub.com/AXSHATJHA/AJ-GRAF-PROJ.mlflow')
+# dagshub.init(repo_owner='AXSHATJHA', repo_name='AJ-GRAF-PROJ', mlflow=True)
 # -------------------------------------------------------------------------------------
 
+dagshub_token = os.getenv("CAPSTONE_TEST")
+if not dagshub_token:
+    raise EnvironmentError("CAPSTONE_TEST environment variable is not set")
 
+os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_token
+os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
+
+dagshub_url = "https://dagshub.com"
+repo_owner = "AXSHATJHA"
+repo_name = "AJ-GRAF-PROJ"
+
+# Set up MLflow tracking URI
+mlflow.set_tracking_uri(f'{dagshub_url}/{repo_owner}/{repo_name}.mlflow')
 
 
 # Initialize Flask app
