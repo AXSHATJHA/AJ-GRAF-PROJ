@@ -210,3 +210,4 @@ creds.txt
 notebooks/
 local_s3/
 models/
+data/
