@@ -1,11 +1,13 @@
 # load test + signature test + performance test
 
+from ast import alias
 import unittest
 import mlflow
 import os
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import pickle
+from mlflow.exceptions import RestException
 
 class TestModelLoading(unittest.TestCase):
 
@@ -39,10 +41,15 @@ class TestModelLoading(unittest.TestCase):
         cls.holdout_data = pd.read_csv('data/processed/test_bow.csv')
 
     @staticmethod
-    def get_latest_model_version(model_name, stage="Staging"):
+    def get_latest_model_version(model_name, alias="staging"):
         client = mlflow.MlflowClient()
-        latest_version = client.get_latest_versions(model_name, stages=[stage])
-        return latest_version[0].version if latest_version else None
+        try:
+            # Fetch the single version currently assigned to this alias
+            model_version = client.get_model_version_by_alias(model_name, alias)
+            return model_version.version
+        except RestException:
+            # If the alias does not exist (e.g., no model is currently "staging"), return None
+            return None
 
     def test_model_loaded_properly(self):
         self.assertIsNotNone(self.new_model)

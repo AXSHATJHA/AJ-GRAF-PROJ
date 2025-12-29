@@ -22,25 +22,22 @@ def promote_model():
     client = mlflow.MlflowClient()
 
     model_name = "my_model"
-    # Get the latest version in staging
-    latest_version_staging = client.get_latest_versions(model_name, stages=["Staging"])[0].version
 
-    # Archive the current production model
-    prod_versions = client.get_latest_versions(model_name, stages=["Production"])
-    for version in prod_versions:
-        client.transition_model_version_stage(
-            name=model_name,
-            version=version.version,
-            stage="Archived"
-        )
+    # 1. Get the version currently aliased as "staging"
+    # (Assumes you have assigned the alias "staging" to your candidate model)
+    staging_model = client.get_model_version_by_alias(model_name, "staging")
+    latest_version_staging = staging_model.version
 
-    # Promote the new model to production
-    client.transition_model_version_stage(
+    # 2. Promote to Production (Assign "prod" alias)
+    # NOTE: This replaces the "Archive" loop. Assigning the alias to the new version 
+    # automatically removes it from the old version.
+    client.set_registered_model_alias(
         name=model_name,
-        version=latest_version_staging,
-        stage="Production"
+        alias="prod", 
+        version=latest_version_staging
     )
-    print(f"Model version {latest_version_staging} promoted to Production")
+
+    print(f"Model version {latest_version_staging} promoted to Production (alias 'prod')")
 
 if __name__ == "__main__":
     promote_model()
