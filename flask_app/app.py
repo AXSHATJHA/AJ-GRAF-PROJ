@@ -10,6 +10,8 @@ from nltk.corpus import stopwords
 import string
 import re
 import dagshub
+from mlflow.exceptions import RestException
+
 
 import warnings
 warnings.simplefilter("ignore", UserWarning)
@@ -110,15 +112,19 @@ PREDICTION_COUNT = Counter(
 # ------------------------------------------------------------------------------------------
 # Model and vectorizer setup
 model_name = "my_model"
-def get_latest_model_version(model_name):
+@staticmethod
+def get_latest_model_version(model_name, alias="prod"):
     client = mlflow.MlflowClient()
-    latest_version = client.get_latest_versions(model_name, stages=["Production"])
-    if not latest_version:
-        latest_version = client.get_latest_versions(model_name, stages=["None"])
-    return latest_version[0].version if latest_version else None
-
-# model_version = get_latest_model_version(model_name)
-model_uri = f'models:/{model_name}/3'
+    try:
+            # Fetch the single version currently assigned to this alias
+        model_version = client.get_model_version_by_alias(model_name, alias)
+        return model_version.version
+    except RestException:
+        # If the alias does not exist (e.g., no model is currently "staging"), return None
+        return None
+    
+model_version = get_latest_model_version(model_name)
+model_uri = f'models:/{model_name}/{model_version}'
 print(f"Fetching model from: {model_uri}")
 model = mlflow.pyfunc.load_model(model_uri)
 vectorizer = pickle.load(open('models/vectorizer.pkl', 'rb'))
